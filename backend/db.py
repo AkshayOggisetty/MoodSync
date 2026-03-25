@@ -4,14 +4,23 @@ If DATABASE_URL env var is set, uses PostgreSQL. Otherwise falls back to MySQL.
 """
 
 import os
+import sys
 
 DATABASE_URL = os.getenv('DATABASE_URL', '')
+
+# Render uses postgres:// but psycopg2 requires postgresql://
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
+print(f"[MoodSync] DATABASE_URL is {'SET' if DATABASE_URL else 'NOT SET'}", file=sys.stderr)
 
 # ── PostgreSQL mode (Render) ──
 if DATABASE_URL:
     import psycopg2
     import psycopg2.pool
     import psycopg2.extras
+
+    print("[MoodSync] Using PostgreSQL mode", file=sys.stderr)
 
     _pg_pool = None
 
@@ -42,7 +51,7 @@ if DATABASE_URL:
         conn = get_connection()
         try:
             cur = conn.cursor()
-            cur.execute(sql + " RETURNING *" if "INSERT" in sql.upper() and "RETURNING" not in sql.upper() else sql, params or ())
+            cur.execute(sql, params or ())
             conn.commit()
             try:
                 row = cur.fetchone()
@@ -59,6 +68,8 @@ else:
     import mysql.connector
     from mysql.connector import pooling
     from config import DB_CONFIG
+
+    print("[MoodSync] Using MySQL mode", file=sys.stderr)
 
     _pool = None
 
