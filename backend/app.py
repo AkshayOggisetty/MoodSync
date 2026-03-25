@@ -257,7 +257,7 @@ def get_playlists():
         FROM Playlists p
         LEFT JOIN Playlist_Songs ps ON p.playlist_id = ps.playlist_id
         WHERE p.user_id = %s
-        GROUP BY p.playlist_id
+        GROUP BY p.playlist_id, p.name, p.created_at
         ORDER BY p.created_at DESC
     """, (user_id,))
 
